@@ -1,13 +1,13 @@
 /////////////////////////////////////////////////////////////////////////////////
 // Institution: University Visvesvaraya College of Engineering
-// Project Guide: Dr. B P Harish, Chairman and Asst professor, ECE Dept UVCE.
+// Project Guide: Dr. B P Harish, Chairman and Asst professor, ECE Dept, UVCE.
 // Student: Sagar B C (20GAMD3015), IV sem M Tech in ECE, UVCE.
 // Create Date:    07:34:38 09/09/2022 
 // Design Name: 24- bit mantissa multiplier using Modified Booth Encoding.
-// Module Name:    mul_8bit
+// Module Name:    mul_24bit
 // Project Name: submodule of single precision Floating Point Multiplier
 // Target Devices: Xilinx FPGAs
-// Tool versions: Xilinx ISE 
+// Tool versions: Xilinx ISE 14.
 // Description: 24 x 24 bit multiplier is designed by employing modified booth
 //              encoding and final stage reduction is done by using RCA adder.
 //              A novel  and  efficient  way  is developed for partial product
@@ -16,7 +16,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////////
 
-module mul_8bit(y, a, b);
+module mul_24bit(y, a, b);
 input [23:0] a;        //8-bit Multiplicand
 input [23:0] b;        //8-bit Multiplier
 output [47:0] y;      //16-bit result
@@ -34,28 +34,28 @@ assign p0[0] = sel_m[0] & a[0],
        p1[1] = sel_m[1] & a[0],
        p2[1] = sel_m[2] & a[0],
        p3[1] = sel_m[3] & a[0],
-       p4[1] = sel_m[4] & a[0];
-       p5[1] = sel_m[5] & a[0];
-       p6[1] = sel_m[6] & a[0];
-       p7[1] = sel_m[7] & a[0];
-       p8[1] = sel_m[8] & a[0];
-       p9[1] = sel_m[9] & a[0];
-       p10[1] = sel_m[10] & a[0];
-       p11[1] = sel_m[11] & a[0];
+       p4[1] = sel_m[4] & a[0],
+       p5[1] = sel_m[5] & a[0],
+       p6[1] = sel_m[6] & a[0],
+       p7[1] = sel_m[7] & a[0],
+       p8[1] = sel_m[8] & a[0],
+       p9[1] = sel_m[9] & a[0],
+       p10[1] = sel_m[10] & a[0],
+       p11[1] = sel_m[11] & a[0],
        p12[1] = sel_m[12] & a[0];
 
 // Carry bit generation to regularise partial product matrix
 assign p1[0] = sign[0] & ~p0[0],
        p2[0] = sign[1] & ~p1[1],
        p3[0] = sign[2] & ~p2[1],
-       p4[0] = sign[3] & ~p3[1];
-       p5[0] = sign[4] & ~p4[1];
-       p6[0] = sign[5] & ~p5[1];
-       p7[0] = sign[6] & ~p6[1];
-       p8[0] = sign[7] & ~p7[1];
-       p9[0] = sign[8] & ~p8[1];
-       p10[0] = sign[9] & ~p9[1];
-       p11[0] = sign[10] & ~p10[1];
+       p4[0] = sign[3] & ~p3[1],
+       p5[0] = sign[4] & ~p4[1],
+       p6[0] = sign[5] & ~p5[1],
+       p7[0] = sign[6] & ~p6[1],
+       p8[0] = sign[7] & ~p7[1],
+       p9[0] = sign[8] & ~p8[1],
+       p10[0] = sign[9] & ~p9[1],
+       p11[0] = sign[10] & ~p10[1],
        p12[0] = sign[11] & ~p11[1];
 
 // Adopting sign extension mechanism
@@ -118,7 +118,7 @@ partial PP11 (p11[25:2], sel_m[11], sel_2m[11], sign[11], a);
 partial_last PP12 (p12[24:2], sel_m[12], sel_2m[12], sign[12], a);
 
 //wallace tree reduction
-wallace_tree WT (y, p0, p1, p2, p3, p4, p5
+wallace_tree WT (y, p0, p1, p2, p3, p4, p5,
                 p6, p7, p8, p9, p10, p11, p12);
 
 endmodule  // Top level module ends here
@@ -205,13 +205,13 @@ wire [28:0] c4;   // First row adder carry bits
 wire [34:0] s5;   // Second row adder sum bits
 wire [30:0] c5;   // Second row adder carry bits
 wire [30:0] s6;   // Third row adder sum bits
-wire [26:0] c6;   // Third row adder carry bits
+wire [27:0] c6;   // Third row adder carry bits
 
 // Third stage
 wire [42:0] s7;   // First row adder sum bits
 wire [32:0] c7;   // First row adder carry bits
 wire [35:0] s8;   // Second row adder sum bits
-wire [29:0] c8;   // Second row adder carry bits
+wire [30:0] c8;   // Second row adder carry bits
 
 // Fourth stage
 wire [47:0] s9;   // Adder sum bits
@@ -219,7 +219,7 @@ wire [38:0] c9;   // Adder carry bits
 
 // Fifth stage
 wire [47:0] s10;  // Adder sum bits
-wire [41:0] c10;  // Adder carry bits
+wire [42:0] c10;  // Adder carry bits
 
 
 wire [41:0] t;   // Ripple carry adder carry bits
@@ -328,7 +328,7 @@ assign s5[34] = s2[31];
 
 Half_Adder H20 (s5[3], c5[0], c1[3], s2[0]);
 Half_Adder H21 (s5[4], c5[1], c1[4], s2[1]);
-HAlf_Adder H22 (s5[5], c5[2], c1[5], s2[2]);
+Half_Adder H22 (s5[5], c5[2], c1[5], s2[2]);
 
 generate for (i = 0; i < 22; i = i + 1)
 begin: F_Adder5
@@ -436,9 +436,9 @@ Half_Adder HA35 (s9[i+4], c9[i], s7[i+4], c7[i]);
 end
 endgenerate
 
-generate for (i = 0; i < 25; i = i + 1);
-begin: F_Adder9
-Full_Adder FA9 (s9[i+12], c9[i+8], s7[i+12], c7[i+8], s8[i]);
+generate for (i = 0; i < 25; i = i + 1)
+begin: F_Adder10
+Full_Adder FA10 (s9[i+12], c9[i+8], s7[i+12], c7[i+8], s8[i]);
 end
 endgenerate
 
@@ -462,8 +462,8 @@ Half_Adder HA37 (s10[i+5], c10[i], s9[i+5], c9[i]);
 end
 endgenerate
 
-generate for (i = 0; i < 26; i = i + 1);
-begin: F_Adder10
+generate for (i = 0; i < 26; i = i + 1)
+begin: F_Adder11
 Full_Adder FA10 (s10[i+18], c10[i+13], s9[i+18], c9[i+13], c8[i]);
 end
 endgenerate
@@ -497,10 +497,10 @@ output [41:0] y;
 wire [41:0] t;   // Ripple carry adder carry bits
 genvar i;        //generate variable 
 
-Half_Adder H39 (y[0], t[0], a[4], b[0]);
+Half_Adder H39 (y[0], t[0], a[0], b[0]);
 
 generate for (i = 1; i < 42; i = i + 1)
-begin: F_adder11
+begin: F_adder12
 Full_Adder FA11 (y[i], t[i], a[i], b[i], t[i-1]);
 end
 endgenerate   
