@@ -94,7 +94,7 @@ begin: B_Encoder
 booth_encoder BE (sel_m[i], sel_2m[i], sign[i], b[2*i+1], b[2*i], b[2*i-1]);
 end
 endgenerate  
-// Booth ENcoder for last group of bits
+// Booth Encoder for last group of bits
 booth_encoder BE12 (sel_m[12], sel_2m[12], sign[12], 1'b0, 1'b0, b[23]); 
 
 //Partial product generation module instantiation
@@ -126,21 +126,21 @@ endmodule  // Top level module ends here
 
 // module for Booth Encoder
 module booth_encoder (m1, m2, s, b2, b1, b0);
-input b0, b1, b2;   // group of 3 bits of multiplicand
-output m1, m2, s;   // Encoded bits 
+input b0, b1, b2;     // group of 3 bits of multiplicand
+output m1, m2, s;     // Encoded bits 
 wire t;
-assign s = b2;
-xor G1 (m1, b1, b0);
-xnor G2 (t, b2, b1);
-nor G3 (m2, t, m1);
+assign s = b2;        //sign bit
+xor G1 (m1, b1, b0);  //m1 : 1*multiplicand
+xnor G2 (t, b2, b1);  
+nor G3 (m2, t, m1);   //m2 : 2*multiplicand
 endmodule
 
 
 //module for partial product generation
 module partial (p, m1, m2, s, a);
-input m1, m2, s;
-input [23:0] a;
-output [23:0] p;
+input m1, m2, s;  // Booth encoded signals
+input [23:0] a;   //multiplicand a;
+output [23:0] p;  // partial product bits except lsb and carry bit
 wire [22:0] t1, t2, t3;
 wire t_msb;
 
@@ -160,7 +160,7 @@ xor G9 (p[23], t_msb, s);
 
 endmodule
 
-// separate module to generate last row of partial product matrix
+// Separate module to generate last row of partial product matrix
 module partial_last (p, m1, m2, s, a);
 input [23:0] a;
 input m1, m2, s;
@@ -180,14 +180,14 @@ endgenerate
 
 endmodule
 
-// Wallace tree reduction
+// Wallace tree reduction using carry save adders
 module wallace_tree (y, p0, p1, p2, p3, p4, p5,
                     p6, p7, p8, p9, p10, p11, p12);
-input [27:0] p0, p1, p2, p3, p4, p5;
+input [27:0] p0, p1, p2, p3, p4, p5;   //Partial product matrix rows
 input [27:0] p6, p7, p8, p9, p10;
 input [26:0] p11;
 input [24:0] p12;
-output [47:0] y;
+output [47:0] y;                       // Final multiplication result
 
 // First stage
 wire [30:0] s0;  // First row adder sum bits
@@ -224,7 +224,8 @@ wire [42:0] c10;  // Adder carry bits
 
 wire [41:0] t;   // Ripple carry adder carry bits
 
-// First stage first row reduction
+// First stage first row reduction   
+// 3-HAs 25-FAs
 assign s0[0] = p0[0];
 assign s0[29] = p2[26];
 assign s0[30] = p2[27];
@@ -242,6 +243,7 @@ Half_Adder H3 (s0[28], c0[27], p1[27], p2[25]);
 // first stage First row reduction ends here
 
 // First stage second row reduction
+// 4-HAs 24-FAs
 assign s1[0] = p3[0];
 assign s1[1] = p3[1];
 assign s1[30] = p5[26];
@@ -261,6 +263,7 @@ Half_Adder H7 (s1[29], c1[27], p4[27], p5[25]);
 // First stage second row reduction ends here
 
 // First stage third row reduction 
+// 4-HAs 24-FAs
 assign s2[0] = p6[0];
 assign s2[1] = p6[1];
 assign s2[30] = p8[26];
@@ -280,6 +283,7 @@ Half_Adder H11 (s2[29], c2[27], p7[27], p8[25]);
 // First stage third row reduction ends here
 
 // First stage fourth row reduction
+// 4-HAs 24-FAs
  assign s3[0] = p9[0];
  assign s3[1] = p9[1];
  assign s3[30] = p11[26];
@@ -299,6 +303,7 @@ Half_Adder H15 (s3[29], c3[27], p10[27], p11[25]);
 
 
 //Second stage first row reduction 
+// 4-HAs 25-FAs
 assign s4[0] = s0[0];
 assign s4[1] = s0[1];
 assign s4[31] = s1[26],
@@ -321,6 +326,7 @@ Half_Adder H19 (s4[30], c4[28], s0[30], s1[25]);
 // Second stage first row reduction ends here
 
 // Second stage second row reduction
+// 8-HAs 23-FAs
 assign s5[0] = c1[0];
 assign s5[1] = c1[1];
 assign s5[2] = c1[2];
@@ -345,6 +351,7 @@ Half_Adder H27 (s5[33], c5[30], s2[30], c2[27]);
 // Second stage second row reduction ends here
 
 // Second stage third row reduction
+// 3-HAs 25-FAs
 assign s6[0] = s3[0];
 assign s6[1] = s3[1];
 assign s6[2] = s3[2];
@@ -361,6 +368,7 @@ endgenerate
 // Second stage third row reduction ends here
 
 // Third stage first row reduction
+// 9-HAs 24-FAs
 assign s7[0] = s4[0],
        s7[1] = s4[1],
        s7[2] = s4[2];
@@ -373,7 +381,7 @@ assign s7[36] = s5[28],
        s7[41] = s5[33],
        s7[42] = s5[34];
 
-generate for (i = 0; i < 5; i = i + 1)          //5 HAs 
+generate for (i = 0; i < 5; i = i + 1)          
 begin: H_Adder31
 Half_Adder HA31 (s7[i+3], c7[i], s4[i+3], c4[i]);
 end
@@ -393,6 +401,7 @@ endgenerate
 // Third stage first row reduction ends here
 
 // Third stage second row reduction
+// 9-HAs 22-FAs
 assign s8[0] = c5[0],
        s8[1] = c5[1],
        s8[2] = c5[2],
@@ -419,6 +428,7 @@ endgenerate
 // Third stage second row reduction ends here
 
 //Fourth stage reduction
+// 14-HAs 25-FAs
 assign s9[0] = s7[0],
        s9[1] = s7[1],
        s9[2] = s7[2],
@@ -450,6 +460,7 @@ endgenerate
 // Fourth stage reduction ends here
 
 // Fifth stage reduction
+// 17-HAs 26-FAs
 assign s10[0] = s9[0],
        s10[1] = s9[1],
        s10[2] = s9[2],
@@ -478,6 +489,7 @@ endgenerate
 
 
 // Final stage : 42 bit RCA adder is used
+// 1-HA 42-FAs
 assign y[0] = s10[0],
        y[1] = s10[1],
        y[2] = s10[2],
@@ -494,14 +506,14 @@ module RCA_42bit (y, a, b);
 input [41:0] a;
 input [41:0] b;
 output [41:0] y;
-wire [41:0] t;   // Ripple carry adder carry bits
+wire [41:0] t;   // Ripple carry adder intermediate carry bits
 genvar i;        //generate variable 
 
 Half_Adder H39 (y[0], t[0], a[0], b[0]);
 
 generate for (i = 1; i < 42; i = i + 1)
 begin: F_adder12
-Full_Adder FA11 (y[i], t[i], a[i], b[i], t[i-1]);
+Full_Adder FA11 (y[i], t[i], a[i], b[i], t[i-1]);  // 42-FAs
 end
 endgenerate   
 
@@ -513,8 +525,8 @@ endmodule
 module Full_Adder (sum, cout, a, b, cin);
 input a, b, cin;
 output sum, cout;
-assign sum = a ^ b ^ cin;
-assign cout = (a & b)|(b & cin)|(cin & a);
+assign sum = a ^ b ^ cin;                  //Full adder sum bit
+assign cout = (a & b)|(b & cin)|(cin & a); //Full adder carry bit
 endmodule
 // Full Adder module ends here
 
@@ -523,8 +535,8 @@ endmodule
 module Half_Adder (sum, cout, a, b);
 input a, b;
 output sum, cout;
-assign sum = a ^ b;
-assign cout = a & b;
+assign sum = a ^ b;                       //Half adder sum bit
+assign cout = a & b;                      //Half adder carry bit
 endmodule
 //Half Adder module ends here
 
